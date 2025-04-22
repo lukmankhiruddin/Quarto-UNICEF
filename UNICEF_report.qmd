@@ -1,0 +1,461 @@
+---
+title: "Growing Hope"
+subtitle: "**Understanding Child Growth & HIV Awareness Worldwide**"
+format:
+  html:
+    toc: true
+    theme: sandstone
+execute:
+  echo: false
+  warning: false
+  message: false
+  error: false
+author: "Lukman K."
+date: "April 22 2024"
+---
+
+------------------------------------------------------------------------
+
+![](images/test.png){fig-align="center" width="186" height="46"}
+
+|                                                                                                                                                                           |                                                                                                                                                                                                               |
+|:-------------------------------:|:-------------------------------------:|
+|                                                                 ![](images/mission-3-02.png){width="63"}                                                                  |                                                                                  ![](images/vision%20new-02.png){width="61"}                                                                                  |
+|                                                                 [**MISSION**]{style="color: dodgerblue"}                                                                  |                                                                                    [**VISION**]{style="color: dodgerblue"}                                                                                    |
+| XXXXX Test |
+
+Join us in making a significant impact on the lives of children around the world by supporting UNICEF's mission to provide lifesaving nutrition, water, education, and emergency relief.\
+Your donation can help save lives, defend rights, and fulfill the promise of a better future for children in need.\
+**Together, we can create a brighter, healthier, and more equitable world for all children.** [(click to donate)]{style="color: red"}
+
+[![](images/360_F_407880054_fdbzTfwmIBaDmb84pg4hDJ3rb1ezRpZw-2-01.jpg){fig-align="center" width="159"}](https://www.unicef.ie/donate/gaza-crisis-emergency-appeal/?src=SEARCH&ch=DP&gad_source=1&gclid=CjwKCAjwkuqvBhAQEiwA65XxQONvtu1d5DYPTPXW8fMzSs9PMeOE0bX4XTy42BWa3kO-GjSRXYUwWBoCMD0QAvD_BwE#1)
+
+------------------------------------------------------------------------
+
+## [[Introduction]{.underline}]{style="font-family: serif"} 📄
+
+Child well-being is a crucial aspect of societal development, reflecting the health, education, and overall quality of life of our future generations. The report will leverage data analysis and visualization techniques to elucidate the challenges faced by children worldwide, focusing on two specific indicators: [[***the percentage of children suffering from at least two deprivations under homogeneous severe standards***]{.underline}]{style="color: skyblue"}, and [[***children with height-for-age and weight-for-height below -2 standard deviations.***]{.underline}]{style="color: skyblue"}
+
+The datasets utilized in this report include **`unicef_indicator_1.csv`** and **`unicef_indicator_2.csv`**, which provide detailed information on these indicators, while **`unicef_metadata.csv`** offers additional contextual data about countries, such as GDP, inflation, and life expectancy at birth.
+
+[**This report aims to underscore the importance of addressing these issues and advocate for actionable interventions to improve the lives of children globally.**]{style="background-color: yellow"}
+
+```{r}
+# Load necessary packages
+library(dplyr)  
+library(readr) 
+library(maps)
+library(ggplot2)
+```
+
+```{r, include = FALSE, echo=FALSE}
+# Data Exploration
+unicef_indicator_1 <- read_csv("unicef_indicator_1.csv")
+unicef_indicator_2 <- read_csv("unicef_indicator_2.csv")
+unicef_metadata <- read_csv("unicef_metadata.csv")
+
+```
+
+```{r, include = FALSE, echo=FALSE}
+head(unicef_indicator_1)
+head(unicef_indicator_2)
+head(unicef_metadata)
+
+```
+
+```{r, include = FALSE, echo=FALSE}
+# Checking the shape and missing values in unicef_indicator_1 dataset
+shape_1 <- dim(unicef_indicator_1)
+print(shape_1)
+missing_values_1 <- colSums(is.na(unicef_indicator_1))
+print(missing_values_1)
+# In the unicerfindicator 1 dataset, there are 216 rows of data. However, four columns, namely "time_period_activity_related_to_when_the_data_are_collected", "observation_confidentaility", "observation_status", and "unit_multiplier", contain only missing values across all 216 rows. Since these columns don't contribute any useful information to the report, it's better to remove them.
+```
+
+```{r, include = FALSE, echo=FALSE}
+#Fill the missing values of alpha_2_code with alpha_3_code
+unicef_indicator_1 <- unicef_indicator_1 %>%
+  mutate(alpha_2_code = coalesce(alpha_2_code, alpha_3_code))
+```
+
+```{r, include = FALSE, echo=FALSE}
+#Drop columns with all missing values from unicef_indicator_1 dataset
+unicef_indicator_1 <- unicef_indicator_1 %>%
+  select(-c("time_period_activity_related_to_when_the_data_are_collected",
+            "observation_confidentaility",
+            "observation_status",
+            "unit_multiplier"))
+
+```
+
+```{r, include = FALSE, echo=FALSE}
+# Missing values in unicef_indicator_2 dataset
+missing_values_2 <- colSums(is.na(unicef_indicator_2))
+print(missing_values_2)
+```
+
+```{r,include = FALSE, echo=FALSE}
+# In the second dataset unicef_indicator_2 we have some missing values in alpha_2_code that we are going to fill with alpha_3_code
+unicef_indicator_2 <- unicef_indicator_2 %>%
+  mutate(alpha_2_code = coalesce(alpha_2_code, alpha_3_code))
+```
+
+```{r, include = FALSE, echo=FALSE}
+# Missing values in unicef_metadata dataset
+missing_values_metadata <- colSums(is.na(unicef_metadata))
+print(missing_values_metadata)
+```
+
+```{r, include = FALSE, echo=FALSE}
+# Drop rows with missing values from unicef_metadata dataset
+unicef_metadata <- na.omit(unicef_metadata)
+```
+
+## [[**Understanding Child Deprivation:**]{.underline}]{style="font-family: serif"} 📣
+
+*Measured by the percentage of children suffering from at least two deprivations under homogeneous severe standards. This indicator provides insights into the extent of multidimensional poverty experienced by children in different countries.*
+
+From population trends to economic indicators and public health statistics, this report offers a comprehensive view into the evolving dynamics of some nations worldwide, highlighting critical socio-economic factors such as the **average child deprivation rate**, **GDP per capita**, **average life expectancy**, and **military expenditure**. These metrics provide valuable insights into the well-being and prosperity of nations, guiding policymakers and stakeholders in their efforts to address the diverse needs of their populations and foster sustainable development.
+
+```{r, include = FALSE, echo=FALSE}
+avg_child_deprivation_rate <- mean(unicef_indicator_1$obs_value, na.rm = TRUE)
+
+
+avg_gdp_per_capita <- mean(unicef_metadata$`GDP per capita (constant 2015 US$)`, na.rm = TRUE)
+
+
+avg_life_expectancy <- mean(unicef_metadata$`Life expectancy at birth, total (years)`, na.rm = TRUE)
+
+
+avg_military_expenditure <- mean(unicef_metadata$`Military expenditure (% of GDP)`, na.rm = TRUE)
+
+
+avg_gni <- mean(unicef_metadata$`GNI (current US$)`, na.rm = TRUE)
+
+
+print(paste("Average Child Deprivation Rate:", round(avg_child_deprivation_rate, 2)))
+print(paste("Average GDP per Capita (USD):", round(avg_gdp_per_capita, 2)))
+print(paste("Average Life Expectancy (Years):", round(avg_life_expectancy, 2)))
+print(paste("Average Military Expenditure (% of GDP):", round(avg_military_expenditure, 2)))
+print(paste("Average GNI (current US$):", round(avg_gni, 2)))
+```
+
+### [[**Top 10 Countries with the Highest Child Deprivation Rates**]{.underline}]{style="font-family: serif"} 🚩
+
+Let's delve into the socio-economic landscape of the world's leading nations as we examine the average child deprivation rates across the top 10 countries.
+
+```{r, fig.align='center', fig.show='hold', out.width='80%', fig.width=7, fig.height=5}
+top_countries_child_deprivation <- unicef_indicator_1 %>%
+  group_by(country) %>%
+  summarize(avg_child_deprivation = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(desc(avg_child_deprivation)) %>%
+  top_n(10)
+top_countries_child_deprivation_plot <- ggplot(top_countries_child_deprivation, aes(x = avg_child_deprivation, y = reorder(country, avg_child_deprivation))) +
+  geom_bar(stat = "identity", fill = "purple") +
+  geom_text(aes(label = sprintf("%.2f", avg_child_deprivation), x = avg_child_deprivation + 1), hjust = 0.29) +
+  labs(title = "Top 10 Countries: Average Child Deprivation Rate",
+       x = "Average Child Deprivation Rate (%)", y = NULL) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 12),
+        axis.title.y = element_blank(),
+        panel.grid = element_blank(),
+        axis.line = element_blank())
+
+print(top_countries_child_deprivation_plot)
+
+
+```
+
+1.  **Geographical Patterns**: The countries listed are primarily from Africa, with the exception of Cambodia. This indicates that child deprivation is particularly prevalent in African nations within the context of this graph.
+
+2.  **Severity Variation**: There is variation in the severity of child deprivation among these countries, with Niger and Chad experiencing the highest rates, suggesting that these countries might be facing more severe or more widespread challenges related to child well-being.
+
+3.  **Need for Interventions**: High child deprivation rates imply that there are substantial numbers of children who do not have access to basic services and needs, pointing to a need for increased social and economic interventions.
+
+4.  **Data for Action**: Such data is crucial for policymakers, non-governmental organizations, and international bodies to understand where to focus their efforts and resources to make effective changes.
+
+```{r, fig.align='center', out.width='80%'}
+top_countries_deprivation <- top_countries_child_deprivation$country
+
+# Filter metadata for top countries
+top_countries_metadata <- unicef_metadata %>%
+  filter(country %in% top_countries_deprivation)
+
+# Plot average inflation and GDP per capita
+inflation_gdp_plot <- ggplot(top_countries_metadata, aes(x = reorder(country, -`GDP per capita (constant 2015 US$)`))) +
+  geom_bar(aes(y = `GDP per capita (constant 2015 US$)`, fill = "GDP per Capita"), stat = "identity", width = 0.3) +
+  geom_bar(aes(y = `Inflation, consumer prices (annual %)`, fill = "Inflation"), stat = "identity", width = 0.3) +
+  labs(title = "Average GDP per Capita and Inflation Rate",
+       x = "Country", y = "Value",
+       fill = "Indicator") +
+  scale_fill_manual(values = c("GDP per Capita" = "lightgreen", "Inflation" = "salmon")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.y = element_blank(),
+        panel.grid = element_blank(),
+        axis.line = element_blank())
+
+# Print the plot
+print(inflation_gdp_plot)
+```
+
+This **two graphs** in summary represent a comparative analysis of the top 10 countries with the highest child deprivation rates. By highlighting these countries and examining their average GDP per capita and inflation rate, we gain valuable insights into the socio-economic challenges they face.
+
+By highlighting countries with high child deprivation rates and potentially struggling economies, [**UNICEF can prioritize and tailor its interventions, allocating resources more efficiently to the areas in greatest need.**]{style="color: red"}
+
+Understanding the economic context of these nations is crucial for **policymakers**, **organizations**, and **stakeholders** seeking to **develop targeted interventions** and support systems to alleviate child deprivation and promote sustainable development.
+
+### [[**Temporal Trends: Economic Growth and Child Welfare Over Time**]{.underline}]{style="font-family: serif"} ⌛️
+
+In the following visual representations, we explore the progression of two distinct yet telling metrics over time.
+
+-   The **first graph** tracks the average GDP per capita, reflecting economic prosperity through the decades.
+
+-   The **second graph** offers a closer look at the volatility in child welfare, as indicated by the average child deprivation rate over a span of recent years.
+
+[**Together, these trends paint a picture of economic and social dynamics at play over varying timescales.**]{style="background-color: yellow"}
+
+```{r}
+child_deprivation_data <- unicef_indicator_1 %>%
+  select(time_period, obs_value) %>%
+  rename(year = time_period, avg_child_deprivation = obs_value)
+
+gdp_data <- unicef_metadata %>%
+  select(year, `GDP per capita (constant 2015 US$)`) %>%
+  rename(avg_gdp_per_capita = `GDP per capita (constant 2015 US$)`)
+
+
+
+```
+
+```{r, fig.align='center', out.width='80%'}
+avg_gdp_data <- gdp_data %>%
+  group_by(year) %>%
+  summarise(avg_gdp_per_capita = mean(avg_gdp_per_capita))
+gdp_line_plot <- ggplot(avg_gdp_data, aes(x = year, y = avg_gdp_per_capita)) +
+  geom_line(color = "lightgreen", size = 1.2) +
+  labs(title = "Evolution of Average GDP per Capita over Time",
+       x = "Year", y = "Average GDP per Capita (constant 2015 US$)") +
+  theme_minimal()
+print(gdp_line_plot)
+```
+
+This **first graph** chronologically charts the economic trajectory of nations from 1960 to beyond 2020. It reflects an ascending trend in the average wealth generated per person, adjusted to 2015's dollar value to account for inflation. [***The overall direction indicates a long-term economic expansion.***]{.underline} Understanding this trend is vital for contextualizing the economic backdrop against which child deprivation is set, as it may correlate with the availability of resources for social programs, including those aimed at mitigating child poverty and deprivation.
+
+```{r, fig.align='center', out.width='80%'}
+avg_deprivation_data <- child_deprivation_data %>%
+  group_by(year) %>%
+  summarise(avg_child_deprivation = mean(avg_child_deprivation))
+deprivation_line_plot <- ggplot(avg_deprivation_data, aes(x = year, y = avg_child_deprivation)) +
+  geom_line(color = "skyblue", size = 1.2) +
+  labs(title = "Evolution of Average Child Deprivation Rate over Time",
+       x = "Year", y = "Average Child Deprivation Rate (%)") +
+  theme_minimal()
+
+print(deprivation_line_plot)
+
+```
+
+This **second graph** offers a narrower temporal window, spanning from 2012 to 2018, and captures the percentage of children experiencing deprivation in fundamental needs such as nutrition, education, and healthcare. Unlike the gradual rise in GDP per capita, this graph presents a downward trajectory. [***This suggests an improvement in conditions related to child deprivation, with a general decrease in the rate at which children are experiencing deprivation in critical areas of well-being.***]{.underline} While there are fluctuations within this period, the end point of the graph indicates a lower rate of child deprivation than the starting point, which could be interpreted as a positive outcome of the measures taken during these years.
+
+[**Over the selected time frame, conditions for children have improved on average.**]{style="color: green"}
+
+[***Summary***]{.underline}: The trend analysis of GDP and average child deprivation rate over time reveals insightful patterns. The line chart depicting the evolution of average GDP per capita shows a consistent upward trend, indicating overall economic growth across the years. Conversely, the line chart illustrating the evolution of the average child deprivation rate demonstrates a promising downward trajectory, suggesting a positive improvement in socio-economic conditions. [**This juxtaposition between the upward trend in GDP and the downward trend in child deprivation underscores the importance of socio-economic development initiatives aimed at reducing poverty and enhancing the well-being of children worldwide.**]{style="color: deepskyblue"}
+
+### [[**Comparative Analysis of Child Deprivation Rates by Gender**]{.underline}]{style="font-family: serif"} ⚤
+
+![](images/gender%20icon-01.png){fig-align="center" width="45"}
+
+```{r, fig.align='center', fig.show='hold', out.width='80%', fig.width=17, fig.height=8}
+gender_deprivation_data <- unicef_indicator_1 %>%
+  group_by(sex) %>%
+  summarise(avg_child_deprivation = mean(obs_value))
+gender_plot <- ggplot(gender_deprivation_data, aes(x = avg_child_deprivation, y = sex, fill = sex)) +
+  geom_bar(stat = "identity", width = 0.4) +
+  scale_fill_manual(values = c("Male" = "skyblue", "Female" = "pink")) +
+  geom_text(aes(label = paste0(round(avg_child_deprivation, 2), "%"), y = sex), hjust = 1, size = 10, fontface = "bold") +
+  labs(title = "Gender-based Observation of Child Deprivation Rate",
+       x = "Average Child Deprivation Rate (%)", y = "Gender") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 25),
+        axis.text.x = element_text(size = 25),
+        axis.title = element_text(size = 30),
+        title = element_text(size = 30), 
+        legend.position = "none")  
+
+print(gender_plot)
+```
+
+The gender-based observation of child deprivation rate reveals a striking similarity in the average deprivation rates between genders, with **values very close to each other**. This suggests that addressing child deprivation should not be contingent upon gender-specific interventions. [Instead, a holistic approach that targets the root causes of deprivation, irrespective of gender, is essential to ensure equitable outcomes for all children.]{style="color: green"} By focusing on comprehensive socio-economic policies and interventions, we can work towards creating a more inclusive and supportive environment for children worldwide.
+
+### [[**Socioeconomic Indicators and Correlation with Child Deprivation**]{.underline}]{style="font-family: serif"} 📉
+
+```{r}
+unicef_metadata <- rename(unicef_metadata, time_period = year)
+
+```
+
+```{r, fig.align='center', out.width='80%'}
+
+# Merge the datasets
+merged_data <- merge(unicef_indicator_1, unicef_metadata, by = c("alpha_3_code", "time_period"), suffixes = c("_indicator", "_metadata"))
+# Filter for the year 2018 and remove NA values
+data_2018 <- filter(merged_data, time_period == 2018)
+data_2018 <- na.omit(data_2018)
+
+# Aggregate the data by 'country_indicator' to get average values
+data_2018_aggregated <- data_2018 %>%
+  group_by(country_indicator) %>%
+  summarise(
+    avg_gdp_per_capita = mean(`GDP per capita (constant 2015 US$)`),
+    avg_child_deprivation = mean(obs_value)
+  )
+
+# Merge the nudge values to the aggregated data
+nudge_values <- data.frame(country_indicator = c("Tunisia", "Iraq", "Gambia", "Cameroon", "Madagascar", "Guinea"),
+                           nudge_x = c(100, -100, 100, -100, 100, -100),
+                           nudge_y = c(1, 1, -1, -1, 5, -5))
+data_2018_aggregated <- merge(data_2018_aggregated, nudge_values, by = "country_indicator", all.x = TRUE)
+
+# Plotting the aggregated data
+correlation_plot <- ggplot(data_2018_aggregated, aes(x = avg_gdp_per_capita, y = avg_child_deprivation, label = country_indicator)) +
+  geom_point(color = "skyblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") + 
+  geom_text(aes(nudge_x = nudge_x, nudge_y = nudge_y), 
+            check_overlap = TRUE, size = 2.7) +  
+  labs(title = "Correlation between Child Deprivation Rate and GDP Per Capita (2018)",
+       x = "GDP Per Capita (constant 2015 US$)", y = "Child Deprivation Rate (%)") +
+  theme_minimal()
+
+# Print the plot
+print(correlation_plot)
+
+```
+
+```{r, fig.align='center', out.width='80%'}
+
+# Aggregate the data by 'country_indicator' to get average values if necessary
+data_2018_aggregated <- data_2018 %>%
+  group_by(country_indicator) %>%
+  summarise(
+    avg_life_expectancy = mean(`Life expectancy at birth, total (years)`),
+    avg_child_deprivation = mean(obs_value)
+  )
+
+# Plotting the aggregated data
+correlation_plot <- ggplot(data_2018_aggregated, aes(x = avg_life_expectancy, y = avg_child_deprivation, label = country_indicator)) +
+  geom_point(color = "skyblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") + 
+  geom_text(data = subset(data_2018_aggregated, country_indicator %in% c("Tunisia", "Iraq", "Gambia", "Cameroon", "Madagascar", "Nigeria", "Guinea", "Mali", "Zambia", "Mongolia", "Kyrgyzstan")), 
+            aes(label = country_indicator), nudge_x = 0.1, nudge_y = 0.1, size = 3) +  
+  labs(title = "Correlation between Child Deprivation Rate and Life expectancy at birth (2018)",
+       x = "Life expectancy at birth", y = "Child Deprivation Rate (%)") +
+  theme_minimal()
+
+# Print the plot
+print(correlation_plot)
+
+
+```
+
+-   The **first graph** suggests an inverse relationship between GDP per capita and child deprivation rates—higher GDP per capita is be associated with lower child deprivation.
+
+-   The **second graph** shows a similar inverse relationship, where higher life expectancy at birth could correlate with lower rates of child deprivation.
+
+[**These analysis underscore potential connections between a country's economic status, health outcomes, and the well-being of its children.**]{style="color: dodgerblue"} Such insights are crucial for **policymakers** and **researchers** aiming to address child deprivation through multifaceted socio-economic development.
+
+We observe a clear negative correlation between child deprivation rate and GDP per capita and Life expectancy at birth across countries. As child deprivation rate increases, GDP per capita and Life expectancy tend to decrease. **This negative correlation is [in line with expectations]{.underline}, as countries with higher levels of child deprivation often face greater economic challenges, leading to lower GDP per capita.**
+
+### [[**Percentage Of Children Suffering At Least Two Deprivation Across Countries**]{.underline}]{style="font-family: serif"} 🌍
+
+```{r}
+world_map <- map_data("world")
+
+average_obs <- unicef_indicator_1 %>%
+  group_by(country) %>%
+  summarise(avg_obs_value = mean(obs_value, na.rm = TRUE))
+```
+
+```{r, fig.align='center', fig.show='hold', out.width='100%', fig.width=10, fig.height=5}
+ggplot(average_obs) +
+  geom_map(data = world_map, map = world_map, aes(map_id = region),
+           fill = "white", color = "#7f7f7f", size = 0.25) +
+  geom_map(data = average_obs, aes(map_id = country, fill = avg_obs_value), map = world_map, size = 0.25) +
+  scale_fill_gradient(name = "Average % Child suffering", low = "lightblue", high = "salmon") +
+  expand_limits(x = world_map$long, y = world_map$lat)
+```
+
+The heatmap illustrates the distribution and percentage of children suffering from at least two deprivations across different countries. [[**Warmer colors**]{.underline}]{style="background-color:salmon"} indicate higher levels of deprivation, while [[**cooler colors**]{.underline}]{style="background-color:lightblue"} represent lower levels. This visualization allows us to discern geographical patterns and disparities in child well-being globally. Countries with [**warmer shades**]{style="color: salmon"} may require more attention and targeted interventions to address the underlying causes of deprivation and improve child welfare than those with [**cooler shades.**]{style="color: lightblue"}
+
+### [[**Understanding Child Stunting and Wasting**]{.underline}]{style="font-family: serif"} 📊
+
+*Measured by the percentage of children with height-for-age and weight-for-height below -2 standard deviations. This indicator highlights severe malnutrition.*
+
+Let's identify the countries facing the most significant challenges in child nutrition by looking at the top 10 countries with the highest average rates of child stunting and wasting.
+
+```{r top_10_stunting_wasting, fig.align='center', fig.show='hold', out.width='80%', fig.width=7, fig.height=5}
+# Calculate top 10 countries for stunting and wasting using unicef_indicator_2
+top_countries_stunting_wasting <- unicef_indicator_2 %>%
+  group_by(country) %>%
+  summarize(avg_stunted_wasted = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(desc(avg_stunted_wasted)) %>%
+  top_n(10, avg_stunted_wasted) # Explicitly specify the variable for top_n
+
+# Create the plot
+top_countries_stunting_wasting_plot <- ggplot(top_countries_stunting_wasting, aes(x = avg_stunted_wasted, y = reorder(country, avg_stunted_wasted))) +
+  geom_bar(stat = "identity", fill = "purple") + # Uses purple bars
+  geom_text(aes(label = sprintf("%.2f%%", avg_stunted_wasted), x = avg_stunted_wasted), hjust = -0.1, size = 3.5) + # Added % sign and adjusted position/size
+  labs(title = "Top 10 Countries: Average Child Stunting & Wasting Rate",
+       x = "Average Rate (%)", y = NULL) + # Label indicates Percentage Rate
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 12),
+        axis.title.y = element_blank(),
+        panel.grid.major.y = element_blank(), # Remove horizontal grid lines
+        panel.grid.minor.x = element_blank(), # Remove minor vertical grid lines
+        axis.line.x = element_line(color="grey"), # Add x-axis line
+        axis.ticks.x = element_line(color="grey"), # Add x-axis ticks
+        axis.text.x = element_text(size=10)) +
+  coord_cartesian(clip = 'off') + # Allow text labels to go outside plot area
+  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) # Expand x-axis slightly for labels
+
+print(top_countries_stunting_wasting_plot)
+```
+
+This chart reveals the countries where children are most affected by severe malnutrition, indicated by both stunting (low height for age) and wasting (low weight for height). High rates in these countries point to critical needs for nutritional support, healthcare interventions, and improvements in food security and sanitation. Addressing stunting and wasting is crucial for long-term child development and survival.
+
+## [[**In light of all the findings of this Report...**]{.underline}]{style="font-family: serif"}
+
+[**UNICEF**]{style="color: dodgerblue"} has sets a series of [**ambitious goals**]{style="color: dodgerblue"} aimed at addressing critical aspects of child and adolescent health. From shielding children against the pervasive threat of malnutrition to providing vital resources for combating life-threatening conditions. These milestones represent a roadmap for UNICEF's dedicated efforts over the next few years.
+
+[Each number reflects not just a statistic, but a step towards a healthier future for the most vulnerable segments of the population.]{style="background-color: yellow"}
+
+#### [**KEY PLANNED RESULTS FOR 2025**]{style="font-family: serif"} ![](images/gooal.png){width="33" height="30"}
+
+![](images/goal%20giusto-2-01.png){fig-align="center" width="493"}
+
+## [[**Conclusion**]{.underline}]{style="font-family: serif"}
+
+As we conclude this report, several key findings emerge from our exploration of global child well-being indicators. Firstly, we observed significant variations in child deprivation rates across countries, highlighting **disparities in socio-economic conditions that impact children's quality of life.** Additionally, the negative correlation between child deprivation rates, GDP per capita and life expectancy at birth underscores the **economic challenges faced by countries with higher deprivation levels.**
+
+Furthermore, our analysis revealed a concerning correlation between child deprivation rates and nutritional indicators, such as the percentage of children suffering from stunting and wasting. This highlights the [**complex interplay between socio-economic factors and health outcomes, emphasizing the need for holistic approaches to address child well-being.**]{style="background-color: yellow"}
+
+### [Solutions]{style="font-family: serif"}
+
+Adressing the challenges highlighted in this report requires multifaceted solutions.
+
+**Policy interventions** aimed at reducing poverty, **improving access to education and healthcare**, and **promoting gender equality** are crucial steps towards alleviating child deprivation. Additionally, **targeted nutritional programs** and i**nvestments in social infrastructure** can help mitigate the impact of socio-economic disparities on children's health and well-being.
+
+While the findings presented here paint a sobering picture of global child well-being, they also underscore the **importance of concerted efforts to address these challenges**. By **leveraging data-driven insights** and implementing evidence-based interventions, [**we can work towards a future where every child has the opportunity to thrive and reach their full potential.**]{style="background-color: yellow"}
+
+------------------------------------------------------------------------
+
+### [Follow us...]{style="font-family: cursive"} {style="color: dodgerblue"}
+
+**Join our community and stay updated with the latest news, events, and ways you can make a difference.**
+
+**Follow us on social media to see real-time updates and stories of how your support is changing children's lives around the world. Connect with us today on Facebook, X, Instagram, and LinkedIn to help advocate for children's rights and wellbeing.**
+
+**Together, we can build a better future for every child.** [**(click on the apps to follow)**]{style="color: skyblue"}
+
+|                                                                                           |                                                                                    |                                                                                       |                                                                                                                            |
+|:----------------:|:----------------:|:----------------:|:-----------------:|
+| [![](images/Facebook_logo_(square)-01.png){width="60"}](https://www.facebook.com/unicef/) | [![](images/Instagram_icon-01.png){width="60"}](https://www.instagram.com/unicef/) | [![](images/LinkedIn_logo.png){width="60"}](https://www.linkedin.com/company/unicef/) | [![](images/x%20logo.avif){width="60"}](https://twitter.com/UNICEF?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor) |
