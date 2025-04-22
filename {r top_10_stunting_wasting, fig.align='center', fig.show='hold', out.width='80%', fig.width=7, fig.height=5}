@@ -1,0 +1,25 @@
+# Calculate top 10 countries for stunting and wasting
+top_countries_stunting_wasting <- unicef_indicator_2 %>%
+  group_by(country) %>%
+  summarize(avg_stunted_wasted = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(desc(avg_stunted_wasted)) %>%
+  top_n(10, avg_stunted_wasted) # Explicitly specify the variable for top_n
+
+# Create the plot
+top_countries_stunting_wasting_plot <- ggplot(top_countries_stunting_wasting, aes(x = avg_stunted_wasted, y = reorder(country, avg_stunted_wasted))) +
+  geom_bar(stat = "identity", fill = "purple") + # Changed fill to purple
+  geom_text(aes(label = sprintf("%.2f%%", avg_stunted_wasted), x = avg_stunted_wasted), hjust = -0.1, size = 3.5) + # Added % sign and adjusted position/size
+  labs(title = "Top 10 Countries: Average Child Stunting & Wasting Rate",
+       x = "Average Rate (%)", y = NULL) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 12),
+        axis.title.y = element_blank(),
+        panel.grid.major.y = element_blank(), # Remove horizontal grid lines
+        panel.grid.minor.x = element_blank(), # Remove minor vertical grid lines
+        axis.line.x = element_line(color="grey"), # Add x-axis line
+        axis.ticks.x = element_line(color="grey"), # Add x-axis ticks
+        axis.text.x = element_text(size=10)) +
+  coord_cartesian(clip = 'off') + # Allow text labels to go outside plot area
+  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) # Expand x-axis slightly for labels
+
+print(top_countries_stunting_wasting_plot) 
