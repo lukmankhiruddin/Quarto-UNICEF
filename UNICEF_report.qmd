@@ -1,46 +1,48 @@
 ---
-title: "Growing Hope"
+title: "GROWING HOPE"
 subtitle: "**Understanding Child Growth & HIV Awareness Worldwide**"
 format:
   html:
     toc: true
     theme: sandstone
+    code-fold: true         # Make code foldable
+    code-tools: true        # Add code tools (copy, etc.)
+    code-summary: "Show code" # Text shown on the code folding button
 execute:
-  echo: false
+  echo: true                # Show code by default (changed from false)
   warning: false
   message: false
   error: false
-author: "Lukman K."
+author: "Lukman Khiruddin"
 date: "April 22 2024"
 ---
 
 ------------------------------------------------------------------------
 
-![](images/test.png){fig-align="center" width="186" height="46"}
 
-|                                                                                                                                                                           |                                                                                                                                                                                                               |
-|:-------------------------------:|:-------------------------------------:|
-|                                                                 ![](images/mission-3-02.png){width="63"}                                                                  |                                                                                  ![](images/vision%20new-02.png){width="61"}                                                                                  |
-|                                                                 [**MISSION**]{style="color: dodgerblue"}                                                                  |                                                                                    [**VISION**]{style="color: dodgerblue"}                                                                                    |
-| XXXXX Test |
+                                                                                                                                                           
+## [Introduction]{style="font-family: serif"}
 
-Join us in making a significant impact on the lives of children around the world by supporting UNICEF's mission to provide lifesaving nutrition, water, education, and emergency relief.\
-Your donation can help save lives, defend rights, and fulfill the promise of a better future for children in need.\
-**Together, we can create a brighter, healthier, and more equitable world for all children.** [(click to donate)]{style="color: red"}
+In every corner of our world, the journey of childhood unfolds with both promise and pitfalls. Where the glow of hope is often shadowed by the realities of stunted growth and the silent spread of HIV.
 
-[![](images/360_F_407880054_fdbzTfwmIBaDmb84pg4hDJ3rb1ezRpZw-2-01.jpg){fig-align="center" width="159"}](https://www.unicef.ie/donate/gaza-crisis-emergency-appeal/?src=SEARCH&ch=DP&gad_source=1&gclid=CjwKCAjwkuqvBhAQEiwA65XxQONvtu1d5DYPTPXW8fMzSs9PMeOE0bX4XTy42BWa3kO-GjSRXYUwWBoCMD0QAvD_BwE#1)
+This dashboard invites you to explore the global landscape of child development, weaving together vivid data on child stunting and HIV awareness to reveal the stark contrasts and hidden connections shaping young lives.
 
-------------------------------------------------------------------------
+Through insightful visualizations and thoughtful analysis, we aim to illuminate the urgent challenges and inspiring progress that define this complex story, empowering policymakers, advocates, and communities to drive meaningful change for the next generation.
 
-## [[Introduction]{.underline}]{style="font-family: serif"} 📄
-
-Child well-being is a crucial aspect of societal development, reflecting the health, education, and overall quality of life of our future generations. The report will leverage data analysis and visualization techniques to elucidate the challenges faced by children worldwide, focusing on two specific indicators: [[***the percentage of children suffering from at least two deprivations under homogeneous severe standards***]{.underline}]{style="color: skyblue"}, and [[***children with height-for-age and weight-for-height below -2 standard deviations.***]{.underline}]{style="color: skyblue"}
-
-The datasets utilized in this report include **`unicef_indicator_1.csv`** and **`unicef_indicator_2.csv`**, which provide detailed information on these indicators, while **`unicef_metadata.csv`** offers additional contextual data about countries, such as GDP, inflation, and life expectancy at birth.
-
-[**This report aims to underscore the importance of addressing these issues and advocate for actionable interventions to improve the lives of children globally.**]{style="background-color: yellow"}
+```{r setup, include=FALSE}
+# This chunk sets global options for how comments are displayed in code
+knitr::opts_chunk$set(
+  comment = NA,  # Remove the default comment prefix
+  tidy.opts = list(width.cutoff = 60),
+  tidy = TRUE
+)
+```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+#| comment: ""
+
 # Load necessary packages
 library(dplyr)  
 library(readr) 
@@ -111,351 +113,586 @@ print(missing_values_metadata)
 unicef_metadata <- na.omit(unicef_metadata)
 ```
 
-## [[**Understanding Child Deprivation:**]{.underline}]{style="font-family: serif"} 📣
+## [HIV Knowledge Among Youth by Country]{style="font-family: serif"}
 
-*Measured by the percentage of children suffering from at least two deprivations under homogeneous severe standards. This indicator provides insights into the extent of multidimensional poverty experienced by children in different countries.*
+This comparison highlights the percentage of young people (aged 15–24) who possess comprehensive, correct knowledge of HIV across countries. By displaying both the leaders and laggards, we can better understand the global disparities in HIV education. This helps policymakers identify both success stories to emulate and areas where urgent action is needed.
 
-From population trends to economic indicators and public health statistics, this report offers a comprehensive view into the evolving dynamics of some nations worldwide, highlighting critical socio-economic factors such as the **average child deprivation rate**, **GDP per capita**, **average life expectancy**, and **military expenditure**. These metrics provide valuable insights into the well-being and prosperity of nations, guiding policymakers and stakeholders in their efforts to address the diverse needs of their populations and foster sustainable development.
+::: {.panel-tabset}
 
-```{r, include = FALSE, echo=FALSE}
-avg_child_deprivation_rate <- mean(unicef_indicator_1$obs_value, na.rm = TRUE)
+## Top 5 Countries
 
+```{r hiv_knowledge_top_tab, fig.align='center', fig.width=8, fig.height=5, out.width='100%', warning=FALSE, message=FALSE}
+#| code-fold: true
+#| code-summary: "Show code for top countries chart"
 
-avg_gdp_per_capita <- mean(unicef_metadata$`GDP per capita (constant 2015 US$)`, na.rm = TRUE)
+# Load necessary packages
+library(ggplot2)
+library(dplyr)
 
+# Read the combined indicator data
+combined_indicators <- read_csv("Indicator_Combined.csv")
 
-avg_life_expectancy <- mean(unicef_metadata$`Life expectancy at birth, total (years)`, na.rm = TRUE)
+# Filter for HIV knowledge indicator and remove NA values
+hiv_knowledge_data <- combined_indicators %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  filter(!is.na(obs_value))
 
+# Get the most recent data point for each country by sex
+recent_hiv_knowledge <- hiv_knowledge_data %>%
+  group_by(country, sex) %>%
+  arrange(desc(time_period)) %>%
+  slice(1) %>%
+  ungroup()
 
-avg_military_expenditure <- mean(unicef_metadata$`Military expenditure (% of GDP)`, na.rm = TRUE)
-
-
-avg_gni <- mean(unicef_metadata$`GNI (current US$)`, na.rm = TRUE)
-
-
-print(paste("Average Child Deprivation Rate:", round(avg_child_deprivation_rate, 2)))
-print(paste("Average GDP per Capita (USD):", round(avg_gdp_per_capita, 2)))
-print(paste("Average Life Expectancy (Years):", round(avg_life_expectancy, 2)))
-print(paste("Average Military Expenditure (% of GDP):", round(avg_military_expenditure, 2)))
-print(paste("Average GNI (current US$):", round(avg_gni, 2)))
-```
-
-### [[**Top 10 Countries with the Highest Child Deprivation Rates**]{.underline}]{style="font-family: serif"} 🚩
-
-Let's delve into the socio-economic landscape of the world's leading nations as we examine the average child deprivation rates across the top 10 countries.
-
-```{r, fig.align='center', fig.show='hold', out.width='80%', fig.width=7, fig.height=5}
-top_countries_child_deprivation <- unicef_indicator_1 %>%
+# Calculate average for both sexes for each country
+avg_hiv_knowledge <- recent_hiv_knowledge %>%
   group_by(country) %>%
-  summarize(avg_child_deprivation = mean(obs_value, na.rm = TRUE)) %>%
-  arrange(desc(avg_child_deprivation)) %>%
-  top_n(10)
-top_countries_child_deprivation_plot <- ggplot(top_countries_child_deprivation, aes(x = avg_child_deprivation, y = reorder(country, avg_child_deprivation))) +
-  geom_bar(stat = "identity", fill = "purple") +
-  geom_text(aes(label = sprintf("%.2f", avg_child_deprivation), x = avg_child_deprivation + 1), hjust = 0.29) +
-  labs(title = "Top 10 Countries: Average Child Deprivation Rate",
-       x = "Average Child Deprivation Rate (%)", y = NULL) +
+  summarize(avg_knowledge = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(desc(avg_knowledge))
+
+# Get top 5 countries
+top_5_countries <- head(avg_hiv_knowledge, 5)
+
+# Create the top 5 chart
+top_chart <- ggplot(top_5_countries, aes(x = avg_knowledge, y = reorder(country, avg_knowledge))) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  geom_text(aes(label = sprintf("%.1f%%", avg_knowledge)), hjust = -0.3, size = 3.5, color = "black") +
+  labs(title = "Top 5 Countries with Highest HIV Knowledge",
+       subtitle = "Youth (15-24 years)",
+       x = "Percentage (%)", 
+       y = NULL) +
   theme_minimal() +
-  theme(axis.text.y = element_text(size = 12),
-        axis.title.y = element_blank(),
-        panel.grid = element_blank(),
-        axis.line = element_blank())
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) +
+  scale_x_continuous(limits = c(0, 75), breaks = seq(0, 70, by = 10))
 
-print(top_countries_child_deprivation_plot)
-
-
+# Print the top chart
+print(top_chart)
 ```
 
-1.  **Geographical Patterns**: The countries listed are primarily from Africa, with the exception of Cambodia. This indicates that child deprivation is particularly prevalent in African nations within the context of this graph.
+## Bottom 5 Countries
 
-2.  **Severity Variation**: There is variation in the severity of child deprivation among these countries, with Niger and Chad experiencing the highest rates, suggesting that these countries might be facing more severe or more widespread challenges related to child well-being.
+```{r hiv_knowledge_bottom_tab, fig.align='center', fig.width=8, fig.height=5, out.width='100%', warning=FALSE, message=FALSE}
+#| code-fold: true
+#| code-summary: "Show code for bottom countries chart"
 
-3.  **Need for Interventions**: High child deprivation rates imply that there are substantial numbers of children who do not have access to basic services and needs, pointing to a need for increased social and economic interventions.
+# Get bottom 5 countries - reusing variables from previous chunk
+bottom_5_countries <- tail(avg_hiv_knowledge, 5)
 
-4.  **Data for Action**: Such data is crucial for policymakers, non-governmental organizations, and international bodies to understand where to focus their efforts and resources to make effective changes.
-
-```{r, fig.align='center', out.width='80%'}
-top_countries_deprivation <- top_countries_child_deprivation$country
-
-# Filter metadata for top countries
-top_countries_metadata <- unicef_metadata %>%
-  filter(country %in% top_countries_deprivation)
-
-# Plot average inflation and GDP per capita
-inflation_gdp_plot <- ggplot(top_countries_metadata, aes(x = reorder(country, -`GDP per capita (constant 2015 US$)`))) +
-  geom_bar(aes(y = `GDP per capita (constant 2015 US$)`, fill = "GDP per Capita"), stat = "identity", width = 0.3) +
-  geom_bar(aes(y = `Inflation, consumer prices (annual %)`, fill = "Inflation"), stat = "identity", width = 0.3) +
-  labs(title = "Average GDP per Capita and Inflation Rate",
-       x = "Country", y = "Value",
-       fill = "Indicator") +
-  scale_fill_manual(values = c("GDP per Capita" = "lightgreen", "Inflation" = "salmon")) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1),
-        axis.title.y = element_blank(),
-        panel.grid = element_blank(),
-        axis.line = element_blank())
-
-# Print the plot
-print(inflation_gdp_plot)
-```
-
-This **two graphs** in summary represent a comparative analysis of the top 10 countries with the highest child deprivation rates. By highlighting these countries and examining their average GDP per capita and inflation rate, we gain valuable insights into the socio-economic challenges they face.
-
-By highlighting countries with high child deprivation rates and potentially struggling economies, [**UNICEF can prioritize and tailor its interventions, allocating resources more efficiently to the areas in greatest need.**]{style="color: red"}
-
-Understanding the economic context of these nations is crucial for **policymakers**, **organizations**, and **stakeholders** seeking to **develop targeted interventions** and support systems to alleviate child deprivation and promote sustainable development.
-
-### [[**Temporal Trends: Economic Growth and Child Welfare Over Time**]{.underline}]{style="font-family: serif"} ⌛️
-
-In the following visual representations, we explore the progression of two distinct yet telling metrics over time.
-
--   The **first graph** tracks the average GDP per capita, reflecting economic prosperity through the decades.
-
--   The **second graph** offers a closer look at the volatility in child welfare, as indicated by the average child deprivation rate over a span of recent years.
-
-[**Together, these trends paint a picture of economic and social dynamics at play over varying timescales.**]{style="background-color: yellow"}
-
-```{r}
-child_deprivation_data <- unicef_indicator_1 %>%
-  select(time_period, obs_value) %>%
-  rename(year = time_period, avg_child_deprivation = obs_value)
-
-gdp_data <- unicef_metadata %>%
-  select(year, `GDP per capita (constant 2015 US$)`) %>%
-  rename(avg_gdp_per_capita = `GDP per capita (constant 2015 US$)`)
-
-
-
-```
-
-```{r, fig.align='center', out.width='80%'}
-avg_gdp_data <- gdp_data %>%
-  group_by(year) %>%
-  summarise(avg_gdp_per_capita = mean(avg_gdp_per_capita))
-gdp_line_plot <- ggplot(avg_gdp_data, aes(x = year, y = avg_gdp_per_capita)) +
-  geom_line(color = "lightgreen", size = 1.2) +
-  labs(title = "Evolution of Average GDP per Capita over Time",
-       x = "Year", y = "Average GDP per Capita (constant 2015 US$)") +
-  theme_minimal()
-print(gdp_line_plot)
-```
-
-This **first graph** chronologically charts the economic trajectory of nations from 1960 to beyond 2020. It reflects an ascending trend in the average wealth generated per person, adjusted to 2015's dollar value to account for inflation. [***The overall direction indicates a long-term economic expansion.***]{.underline} Understanding this trend is vital for contextualizing the economic backdrop against which child deprivation is set, as it may correlate with the availability of resources for social programs, including those aimed at mitigating child poverty and deprivation.
-
-```{r, fig.align='center', out.width='80%'}
-avg_deprivation_data <- child_deprivation_data %>%
-  group_by(year) %>%
-  summarise(avg_child_deprivation = mean(avg_child_deprivation))
-deprivation_line_plot <- ggplot(avg_deprivation_data, aes(x = year, y = avg_child_deprivation)) +
-  geom_line(color = "skyblue", size = 1.2) +
-  labs(title = "Evolution of Average Child Deprivation Rate over Time",
-       x = "Year", y = "Average Child Deprivation Rate (%)") +
-  theme_minimal()
-
-print(deprivation_line_plot)
-
-```
-
-This **second graph** offers a narrower temporal window, spanning from 2012 to 2018, and captures the percentage of children experiencing deprivation in fundamental needs such as nutrition, education, and healthcare. Unlike the gradual rise in GDP per capita, this graph presents a downward trajectory. [***This suggests an improvement in conditions related to child deprivation, with a general decrease in the rate at which children are experiencing deprivation in critical areas of well-being.***]{.underline} While there are fluctuations within this period, the end point of the graph indicates a lower rate of child deprivation than the starting point, which could be interpreted as a positive outcome of the measures taken during these years.
-
-[**Over the selected time frame, conditions for children have improved on average.**]{style="color: green"}
-
-[***Summary***]{.underline}: The trend analysis of GDP and average child deprivation rate over time reveals insightful patterns. The line chart depicting the evolution of average GDP per capita shows a consistent upward trend, indicating overall economic growth across the years. Conversely, the line chart illustrating the evolution of the average child deprivation rate demonstrates a promising downward trajectory, suggesting a positive improvement in socio-economic conditions. [**This juxtaposition between the upward trend in GDP and the downward trend in child deprivation underscores the importance of socio-economic development initiatives aimed at reducing poverty and enhancing the well-being of children worldwide.**]{style="color: deepskyblue"}
-
-### [[**Comparative Analysis of Child Deprivation Rates by Gender**]{.underline}]{style="font-family: serif"} ⚤
-
-![](images/gender%20icon-01.png){fig-align="center" width="45"}
-
-```{r, fig.align='center', fig.show='hold', out.width='80%', fig.width=17, fig.height=8}
-gender_deprivation_data <- unicef_indicator_1 %>%
-  group_by(sex) %>%
-  summarise(avg_child_deprivation = mean(obs_value))
-gender_plot <- ggplot(gender_deprivation_data, aes(x = avg_child_deprivation, y = sex, fill = sex)) +
-  geom_bar(stat = "identity", width = 0.4) +
-  scale_fill_manual(values = c("Male" = "skyblue", "Female" = "pink")) +
-  geom_text(aes(label = paste0(round(avg_child_deprivation, 2), "%"), y = sex), hjust = 1, size = 10, fontface = "bold") +
-  labs(title = "Gender-based Observation of Child Deprivation Rate",
-       x = "Average Child Deprivation Rate (%)", y = "Gender") +
+# Create the bottom 5 chart
+bottom_chart <- ggplot(bottom_5_countries, aes(x = avg_knowledge, y = reorder(country, avg_knowledge))) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  geom_text(aes(label = sprintf("%.1f%%", avg_knowledge)), hjust = -0.3, size = 3.5, color = "black") +
+  labs(title = "Bottom 5 Countries with Lowest HIV Knowledge",
+       subtitle = "Youth (15-24 years)",
+       x = "Percentage (%)", 
+       y = NULL) +
   theme_minimal() +
-  theme(axis.text.y = element_text(size = 25),
-        axis.text.x = element_text(size = 25),
-        axis.title = element_text(size = 30),
-        title = element_text(size = 30), 
-        legend.position = "none")  
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) +
+  scale_x_continuous(limits = c(0, 75), breaks = seq(0, 70, by = 10))
 
-print(gender_plot)
+# Print the bottom chart
+print(bottom_chart)
 ```
 
-The gender-based observation of child deprivation rate reveals a striking similarity in the average deprivation rates between genders, with **values very close to each other**. This suggests that addressing child deprivation should not be contingent upon gender-specific interventions. [Instead, a holistic approach that targets the root causes of deprivation, irrespective of gender, is essential to ensure equitable outcomes for all children.]{style="color: green"} By focusing on comprehensive socio-economic policies and interventions, we can work towards creating a more inclusive and supportive environment for children worldwide.
+:::
 
-### [[**Socioeconomic Indicators and Correlation with Child Deprivation**]{.underline}]{style="font-family: serif"} 📉
+This tabbed comparison reveals stark disparities in HIV knowledge among youth globally. The top-performing countries (primarily in Eastern and Southern Africa) have achieved knowledge rates above 50%, while the lowest-performing countries show rates below 5%. 
 
-```{r}
-unicef_metadata <- rename(unicef_metadata, time_period = year)
+This significant gap (over 55 percentage points between highest and lowest) highlights implementation disparities in HIV education programs worldwide. Countries at the bottom of the ranking could benefit from adapting successful education strategies from top-performing nations.
 
+## [HIV Knowledge Trends Over Time (by Sex)]{style="font-family: serif"}
+
+This line chart tracks the evolution of HIV knowledge among young males and females in selected countries over time. The visual uncovers whether both boys and girls are benefiting equally from education efforts, and whether progress is steady, stagnant, or declining. It provides a clear picture of gender gaps and helps guide future interventions to ensure no one is left behind.
+
+```{r hiv_knowledge_trends, fig.align='center', fig.width=10, fig.height=6, out.width='90%', warning=FALSE, message=FALSE}
+# Read the combined indicator data
+combined_indicators <- read_csv("Indicator_Combined.csv")
+
+# Filter for HIV knowledge indicator
+hiv_knowledge_data <- combined_indicators %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  filter(!is.na(obs_value)) %>%
+  filter(sex %in% c("Female", "Male"))
+
+# Find countries with the best trend data (most years, both sexes)
+country_data_counts <- hiv_knowledge_data %>%
+  group_by(country, sex) %>%
+  summarize(data_points = n(), .groups = "drop") %>%
+  group_by(country) %>%
+  summarize(
+    total_points = sum(data_points),
+    has_both_sexes = n() > 1
+  ) %>%
+  filter(has_both_sexes) %>%
+  arrange(desc(total_points))
+
+# Select top 4 countries with the best trend data
+top_trend_countries <- head(country_data_counts$country, 4)
+
+# Filter to these countries with the best trends
+trend_data <- hiv_knowledge_data %>%
+  filter(country %in% top_trend_countries)
+
+# Convert time_period to character type to ensure it's treated as discrete
+trend_data$time_period <- as.character(trend_data$time_period)
+
+# Create shortened year labels
+trend_data <- trend_data %>%
+  mutate(year_short = paste0("'", substr(time_period, 3, 4)))
+
+# Create the line chart with cleaner formatting
+hiv_trend_chart <- ggplot(trend_data, aes(x = year_short, y = obs_value, color = sex, group = interaction(country, sex))) +
+  geom_line(size = 1) +
+  geom_point(size = 2.5) +
+  facet_wrap(~country, ncol = 2) +
+  scale_color_manual(values = c("Female" = "darkorange", "Male" = "darkgoldenrod4")) +
+  # Use scale_x_discrete since years are discrete values
+  scale_x_discrete() +
+  labs(title = "HIV Knowledge Trends by Sex",
+       subtitle = "Percentage of youth (15-24) with comprehensive knowledge",
+       x = "Year", 
+       y = "%",
+       color = "Sex") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    strip.background = element_rect(fill = "lightyellow", color = NA),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.title = element_text(size = 11),
+    panel.spacing = unit(1, "lines")
+  ) +
+  scale_y_continuous(limits = c(0, 60), breaks = seq(0, 60, by = 15))
+
+print(hiv_trend_chart)
 ```
 
-```{r, fig.align='center', out.width='80%'}
+This line chart reveals the evolution of HIV knowledge among young people across countries with the richest trend data, showing patterns of change over time for both males and females.
 
-# Merge the datasets
-merged_data <- merge(unicef_indicator_1, unicef_metadata, by = c("alpha_3_code", "time_period"), suffixes = c("_indicator", "_metadata"))
-# Filter for the year 2018 and remove NA values
-data_2018 <- filter(merged_data, time_period == 2018)
-data_2018 <- na.omit(data_2018)
+## [Gender Gap in HIV Knowledge in India]{style="font-family: serif"}
 
-# Aggregate the data by 'country_indicator' to get average values
-data_2018_aggregated <- data_2018 %>%
-  group_by(country_indicator) %>%
-  summarise(
-    avg_gdp_per_capita = mean(`GDP per capita (constant 2015 US$)`),
-    avg_child_deprivation = mean(obs_value)
+This stacked bar chart shows, side by side, the proportion of young men and women with comprehensive HIV knowledge in India for the latest year. By visualizing the gender gap, this chart draws attention to disparities in access to information and the need for gender-sensitive approaches in health education.
+
+```{r gender_gap_india, fig.align='center', fig.width=8, fig.height=5, out.width='80%', warning=FALSE, message=FALSE}
+# Read the combined indicator data
+combined_indicators <- read_csv("Indicator_Combined.csv")
+
+# Filter for HIV knowledge data for India
+india_hiv_data <- combined_indicators %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  filter(country == "India") %>%
+  filter(sex %in% c("Female", "Male"))
+
+# Get the most recent year's data
+latest_year <- max(india_hiv_data$time_period)
+latest_data <- india_hiv_data %>%
+  filter(time_period == latest_year)
+
+# Prepare data for the chart
+chart_data <- latest_data %>%
+  mutate(
+    With_Knowledge = obs_value,
+    Without_Knowledge = 100 - obs_value
+  ) %>%
+  select(sex, With_Knowledge, Without_Knowledge) %>%
+  # Reshape for plotting
+  tidyr::pivot_longer(
+    cols = c(With_Knowledge, Without_Knowledge),
+    names_to = "knowledge_status",
+    values_to = "percentage"
   )
 
-# Merge the nudge values to the aggregated data
-nudge_values <- data.frame(country_indicator = c("Tunisia", "Iraq", "Gambia", "Cameroon", "Madagascar", "Guinea"),
-                           nudge_x = c(100, -100, 100, -100, 100, -100),
-                           nudge_y = c(1, 1, -1, -1, 5, -5))
-data_2018_aggregated <- merge(data_2018_aggregated, nudge_values, by = "country_indicator", all.x = TRUE)
+# Create the stacked bar chart with correct colors
+gender_gap_chart <- ggplot(chart_data, aes(x = percentage, y = sex, fill = knowledge_status)) +
+  # Reverse the order so "Without_Knowledge" appears first (right to left)
+  geom_col(position = position_stack(reverse = TRUE), width = 0.6) +
+  # Set the colors correctly - blue for With Knowledge, gray for Without Knowledge
+  scale_fill_manual(
+    values = c("With_Knowledge" = "darkblue", "Without_Knowledge" = "#CCCCCC"),
+    labels = c("With HIV Knowledge", "Without HIV Knowledge")
+  ) +
+  labs(
+    title = paste0("Gender Gap in HIV Knowledge in India (", latest_year, ")"),
+    subtitle = "Percentage of youth (15-24) with comprehensive, correct knowledge of HIV",
+    x = "Percentage (%)",
+    y = NULL,
+    fill = NULL
+  ) +
+  # Add text labels for percentages
+  geom_text(
+    aes(label = sprintf("%.1f%%", percentage),
+        x = ifelse(knowledge_status == "With_Knowledge", 
+                  percentage/2, 
+                  100 - percentage/2)),
+    color = ifelse(chart_data$knowledge_status == "With_Knowledge", "white", "black"),
+    size = 3.5
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 10, face = "bold")
+  ) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20))
 
-# Plotting the aggregated data
-correlation_plot <- ggplot(data_2018_aggregated, aes(x = avg_gdp_per_capita, y = avg_child_deprivation, label = country_indicator)) +
-  geom_point(color = "skyblue") +
-  geom_smooth(method = "lm", se = FALSE, color = "red") + 
-  geom_text(aes(nudge_x = nudge_x, nudge_y = nudge_y), 
-            check_overlap = TRUE, size = 2.7) +  
-  labs(title = "Correlation between Child Deprivation Rate and GDP Per Capita (2018)",
-       x = "GDP Per Capita (constant 2015 US$)", y = "Child Deprivation Rate (%)") +
-  theme_minimal()
-
-# Print the plot
-print(correlation_plot)
-
+print(gender_gap_chart)
 ```
 
-```{r, fig.align='center', out.width='80%'}
+This bar chart highlights the gender disparity in HIV knowledge among young people in India based on the most recent available data. The visualization clearly illustrates that only a small percentage of young people in India possess comprehensive HIV knowledge, with a noticeable gap between males and females.
 
-# Aggregate the data by 'country_indicator' to get average values if necessary
-data_2018_aggregated <- data_2018 %>%
-  group_by(country_indicator) %>%
-  summarise(
-    avg_life_expectancy = mean(`Life expectancy at birth, total (years)`),
-    avg_child_deprivation = mean(obs_value)
+The chart shows that while a higher percentage of males have comprehensive HIV knowledge (blue) compared to females, the overall levels remain low for both genders. These findings point to the need for more effective HIV education initiatives that address gender-specific barriers to information access.
+
+## [Child Stunting Burden by Country]{style="font-family: serif"}
+
+This map displays the percentage of children under 5 affected by stunting (low height-for-age) in Africa and Asia, the two continents with the highest burden of child malnutrition. By focusing on these regions, we can better visualize where interventions are most urgently needed and identify patterns of child nutrition challenges.
+
+::: {.panel-tabset}
+
+## Africa
+
+```{r stunting_map_africa, fig.align='center', fig.width=9, fig.height=7, out.width='100%', warning=FALSE, message=FALSE}
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Load necessary packages
+library(ggplot2)
+library(dplyr)
+library(maps)
+
+# Read the combined indicator data
+combined_indicators <- read_csv("Indicator_Combined.csv")
+
+# Filter for stunting data - look for height-for-age indicators
+stunting_data <- combined_indicators %>%
+  filter(grepl("height.for.age", indicator, ignore.case = TRUE) | 
+         grepl("stunting", indicator, ignore.case = TRUE)) %>%
+  filter(!is.na(obs_value)) %>%
+  # Focus on overall numbers, not gender-specific
+  filter(sex == "Total" | is.na(sex))
+
+# Get the most recent data for each country
+recent_stunting <- stunting_data %>%
+  group_by(country) %>%
+  arrange(desc(time_period)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(country, obs_value)
+
+# Load Africa map data
+africa_map <- map_data("world", region = c(
+  # North Africa
+  "Algeria", "Egypt", "Libya", "Morocco", "Tunisia", "Sudan", "South Sudan",
+  # West Africa
+  "Benin", "Burkina Faso", "Cape Verde", "Ivory Coast", "Gambia", "Ghana", 
+  "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Mauritania", "Niger", 
+  "Nigeria", "Senegal", "Sierra Leone", "Togo",
+  # Central Africa
+  "Cameroon", "Central African Republic", "Chad", "Democratic Republic of the Congo", 
+  "Republic of Congo", "Equatorial Guinea", "Gabon", "Sao Tome and Principe",
+  # East Africa
+  "Burundi", "Comoros", "Djibouti", "Ethiopia", "Eritrea", "Kenya", "Madagascar", 
+  "Malawi", "Mauritius", "Mozambique", "Rwanda", "Seychelles", "Somalia", 
+  "Tanzania", "Uganda", "Zambia", "Zimbabwe",
+  # Southern Africa
+  "Angola", "Botswana", "Lesotho", "Namibia", "South Africa", "eSwatini"
+))
+
+# Create a mapping dictionary for common country name mismatches
+country_mapping <- c(
+  "Congo, Democratic Republic of the" = "Democratic Republic of the Congo",
+  "Congo, the Democratic Republic of the" = "Democratic Republic of the Congo",
+  "Congo" = "Republic of Congo",
+  "Tanzania, United Republic of" = "Tanzania",
+  "Swaziland" = "eSwatini",
+  "Ivory Coast" = "Cote d'Ivoire"
+)
+
+# Apply the mapping to handle mismatched country names
+recent_stunting <- recent_stunting %>%
+  mutate(map_region = case_when(
+    country %in% names(country_mapping) ~ country_mapping[country],
+    TRUE ~ country
+  ))
+
+# Merge the Africa map with stunting data
+africa_data <- left_join(africa_map, recent_stunting, by = c("region" = "map_region"))
+
+# Create the Africa map visualization
+africa_stunting_map <- ggplot() +
+  # Base map (all countries gray)
+  geom_polygon(data = africa_map, 
+               aes(x = long, y = lat, group = group),
+               fill = "lightgray", color = "#333333", size = 0.1) +
+  
+  # Add data where available
+  geom_polygon(data = africa_data %>% filter(!is.na(obs_value)),
+               aes(x = long, y = lat, group = group, fill = obs_value),
+               color = "#333333", size = 0.1) +
+  
+  # Create color scale from light yellow to dark green
+  scale_fill_gradientn(
+    colors = c("lightyellow", "yellowgreen", "darkgreen"),
+    name = "Stunting Rate (%)",
+    guide = guide_colorbar(barwidth = 15, barheight = 0.5, title.position = "top")
+  ) +
+  
+  # Labels and titles
+  labs(
+    title = "Child Stunting Burden in Africa",
+    subtitle = "Percentage of children under 5",
+    caption = "Source: UNICEF Data"
+  ) +
+  
+  # Clean theme
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "bottom"
+  ) +
+  
+  # Fix the aspect ratio
+  coord_fixed(1.3)
+
+print(africa_stunting_map)
+```
+
+## Asia
+
+```{r stunting_map_asia, fig.align='center', fig.width=9, fig.height=7, out.width='100%', warning=FALSE, message=FALSE}
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Load Asia map data (reusing previous variables)
+asia_map <- map_data("world", region = c(
+  # Central Asia
+  "Kazakhstan", "Kyrgyzstan", "Tajikistan", "Turkmenistan", "Uzbekistan",
+  # East Asia
+  "China", "Japan", "Mongolia", "North Korea", "South Korea", "Taiwan",
+  # South Asia
+  "Afghanistan", "Bangladesh", "Bhutan", "India", "Maldives", "Nepal", "Pakistan", "Sri Lanka",
+  # Southeast Asia
+  "Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", 
+  "Singapore", "Thailand", "Timor-Leste", "Vietnam",
+  # West Asia / Middle East
+  "Armenia", "Azerbaijan", "Bahrain", "Cyprus", "Georgia", "Iran", "Iraq", "Israel", 
+  "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine", "Qatar", "Saudi Arabia", 
+  "Syria", "Turkey", "United Arab Emirates", "Yemen"
+))
+
+# Additional mappings for Asia countries
+asia_country_mapping <- c(
+  "Iran, Islamic Republic of" = "Iran",
+  "Korea, Democratic People's Republic of" = "North Korea",
+  "Korea, Republic of" = "South Korea",
+  "Lao People's Democratic Republic" = "Laos",
+  "Syrian Arab Republic" = "Syria", 
+  "Viet Nam" = "Vietnam",
+  "Myanmar" = "Burma"
+)
+
+# Update the mapping dictionary with Asia-specific matches
+country_mapping <- c(country_mapping, asia_country_mapping)
+
+# Apply the mapping again with updated dictionary
+recent_stunting <- stunting_data %>%
+  group_by(country) %>%
+  arrange(desc(time_period)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(country, obs_value) %>%
+  mutate(map_region = case_when(
+    country %in% names(country_mapping) ~ country_mapping[country],
+    TRUE ~ country
+  ))
+
+# Merge the Asia map with stunting data
+asia_data <- left_join(asia_map, recent_stunting, by = c("region" = "map_region"))
+
+# Create the Asia map visualization
+asia_stunting_map <- ggplot() +
+  # Base map (all countries gray)
+  geom_polygon(data = asia_map, 
+               aes(x = long, y = lat, group = group),
+               fill = "lightgray", color = "#333333", size = 0.1) +
+  
+  # Add data where available
+  geom_polygon(data = asia_data %>% filter(!is.na(obs_value)),
+               aes(x = long, y = lat, group = group, fill = obs_value),
+               color = "#333333", size = 0.1) +
+  
+  # Create color scale from light yellow to dark green
+  scale_fill_gradientn(
+    colors = c("lightyellow", "yellowgreen", "darkgreen"),
+    name = "Stunting Rate (%)",
+    guide = guide_colorbar(barwidth = 15, barheight = 0.5, title.position = "top")
+  ) +
+  
+  # Labels and titles
+  labs(
+    title = "Child Stunting Burden in Asia",
+    subtitle = "Percentage of children under 5",
+    caption = "Source: UNICEF Data"
+  ) +
+  
+  # Clean theme
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "bottom"
+  ) +
+  
+  # Fix the aspect ratio and zoom on Asia
+  coord_fixed(1.3)
+
+print(asia_stunting_map)
+```
+
+:::
+
+These maps illustrate the geographic distribution of child stunting across Africa and Asia, revealing distinct regional patterns:
+
+1. **Concentration in Sub-Saharan Africa**: Countries in the Sahel region and Central Africa show some of the highest stunting rates, with over 30% of children affected in many nations.
+
+2. **South Asian hotspot**: Countries like India, Pakistan, Bangladesh, and Nepal form a significant hotspot of child stunting, with India displaying particularly concerning rates.
+
+3. **Variation within regions**: Both continents show significant variation, with some countries making substantial progress while neighboring nations continue to struggle.
+
+The burden of stunting in these two continents is particularly concerning as they collectively account for over 80% of all stunted children worldwide. Targeted interventions in the darkest green areas represent opportunities for significant improvements in global child nutrition outcomes.
+
+## [Progress in Reducing Child Stunting]{style="font-family: serif"}
+
+This area chart tracks Bangladesh's progress in reducing child stunting over time. The visualization demonstrates the country's commitment to improving child nutrition and highlights the effectiveness of targeted interventions implemented over the years. The downward trend represents real improvements in the lives of children and showcases a public health success story that other countries might learn from.
+
+```{r bangladesh_stunting_progress, fig.align='center', fig.width=9, fig.height=6, out.width='90%', warning=FALSE, message=FALSE}
+# Read the combined indicator data
+combined_indicators <- read_csv("Indicator_Combined.csv")
+
+# Filter specifically for the standard stunting indicator in Bangladesh
+bangladesh_stunting <- combined_indicators %>%
+  filter(country == "Bangladesh") %>%
+  filter(
+    grepl("stunting|height.for.age", indicator, ignore.case = TRUE) &
+    !grepl("wasting|weight.for.height", indicator, ignore.case = TRUE)
+  ) %>%
+  filter(!is.na(obs_value)) %>%
+  filter(sex == "Total" | is.na(sex))
+
+# Ensure values are in the correct percentage range and sort by time
+bangladesh_stunting <- bangladesh_stunting %>%
+  mutate(
+    # Ensure values are in 0-100 range
+    obs_value = ifelse(obs_value > 100, obs_value/100, obs_value),
+    obs_value = ifelse(obs_value > 100, 100, obs_value),
+    # Convert time_period to character for discrete x-axis
+    time_period = as.character(time_period)
+  ) %>%
+  arrange(time_period)
+
+# Create a separate dataset for labels to avoid the subsetting error
+# Just select every nth point for labeling to avoid overcrowding
+label_data <- bangladesh_stunting
+if(nrow(label_data) > 8) {
+  # Calculate indices to keep - simple integer division
+  n <- ceiling(nrow(label_data) / 8)
+  indices_to_keep <- seq(1, nrow(label_data), by = n)
+  label_data <- label_data[indices_to_keep, ]
+}
+
+# Create the area chart with correct percentage range
+stunting_area_chart <- ggplot(bangladesh_stunting, aes(x = time_period, y = obs_value, group = 1)) +
+  # Create the area with dark green color
+  geom_area(fill = "darkgreen", alpha = 0.7) +
+  # Add line on top of area for clarity
+  geom_line(color = "darkgreen", size = 1.2) +
+  # Add points to show actual data points
+  geom_point(color = "darkgreen", size = 3) +
+  # Add labels for selected data points using the separate label_data
+  geom_text(
+    data = label_data,
+    aes(label = sprintf("%.1f%%", obs_value)), 
+    vjust = -1, size = 4, color = "darkgreen"
+  ) +
+  # Set appropriate labels
+  labs(
+    title = "Progress in Reducing Child Stunting in Bangladesh",
+    subtitle = "Percentage of children under 5 with height-for-age below -2 standard deviations",
+    x = "Year",
+    y = "Stunting Rate (%)",
+    caption = "Source: UNICEF Child Indicator Data"
+  ) +
+  # Use discrete x scale
+  scale_x_discrete() +
+  # Set clean theme
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  # Ensure y-axis is properly bounded between 0-100% with appropriate breaks
+  scale_y_continuous(
+    limits = c(0, 100),
+    breaks = seq(0, 100, by = 10),
+    labels = function(x) paste0(x, "%")
   )
 
-# Plotting the aggregated data
-correlation_plot <- ggplot(data_2018_aggregated, aes(x = avg_life_expectancy, y = avg_child_deprivation, label = country_indicator)) +
-  geom_point(color = "skyblue") +
-  geom_smooth(method = "lm", se = FALSE, color = "red") + 
-  geom_text(data = subset(data_2018_aggregated, country_indicator %in% c("Tunisia", "Iraq", "Gambia", "Cameroon", "Madagascar", "Nigeria", "Guinea", "Mali", "Zambia", "Mongolia", "Kyrgyzstan")), 
-            aes(label = country_indicator), nudge_x = 0.1, nudge_y = 0.1, size = 3) +  
-  labs(title = "Correlation between Child Deprivation Rate and Life expectancy at birth (2018)",
-       x = "Life expectancy at birth", y = "Child Deprivation Rate (%)") +
-  theme_minimal()
-
-# Print the plot
-print(correlation_plot)
-
-
+# Print the chart
+print(stunting_area_chart)
 ```
 
--   The **first graph** suggests an inverse relationship between GDP per capita and child deprivation rates—higher GDP per capita is be associated with lower child deprivation.
+This area chart illustrates Bangladesh's remarkable journey in reducing the prevalence of child stunting over time. The dark green area represents the percentage of children under 5 who are stunted (height-for-age below -2 standard deviations from the median).
 
--   The **second graph** shows a similar inverse relationship, where higher life expectancy at birth could correlate with lower rates of child deprivation.
+The downward slope of the chart tells a positive story of nutrition improvement in Bangladesh, which has been achieved through a combination of:
 
-[**These analysis underscore potential connections between a country's economic status, health outcomes, and the well-being of its children.**]{style="color: dodgerblue"} Such insights are crucial for **policymakers** and **researchers** aiming to address child deprivation through multifaceted socio-economic development.
+1. **Targeted nutrition interventions** - Including micronutrient supplementation, promotion of exclusive breastfeeding, and complementary feeding practices
 
-We observe a clear negative correlation between child deprivation rate and GDP per capita and Life expectancy at birth across countries. As child deprivation rate increases, GDP per capita and Life expectancy tend to decrease. **This negative correlation is [in line with expectations]{.underline}, as countries with higher levels of child deprivation often face greater economic challenges, leading to lower GDP per capita.**
+2. **Broader development progress** - Economic growth, improved food security, and enhanced maternal education
 
-### [[**Percentage Of Children Suffering At Least Two Deprivation Across Countries**]{.underline}]{style="font-family: serif"} 🌍
+3. **Health system strengthening** - Better access to healthcare services, improved water and sanitation facilities, and increased immunization coverage
 
-```{r}
-world_map <- map_data("world")
+Bangladesh's progress serves as an inspiring example for other countries facing similar challenges. The consistent decline demonstrates that with sustained commitment and evidence-based approaches, significant improvements in child nutrition outcomes are achievable even in resource-constrained settings.
 
-average_obs <- unicef_indicator_1 %>%
-  group_by(country) %>%
-  summarise(avg_obs_value = mean(obs_value, na.rm = TRUE))
-```
+## [Conclusion]{style="font-family: serif"}
 
-```{r, fig.align='center', fig.show='hold', out.width='100%', fig.width=10, fig.height=5}
-ggplot(average_obs) +
-  geom_map(data = world_map, map = world_map, aes(map_id = region),
-           fill = "white", color = "#7f7f7f", size = 0.25) +
-  geom_map(data = average_obs, aes(map_id = country, fill = avg_obs_value), map = world_map, size = 0.25) +
-  scale_fill_gradient(name = "Average % Child suffering", low = "lightblue", high = "salmon") +
-  expand_limits(x = world_map$long, y = world_map$lat)
-```
+The dashboard clearly shows that child stunting remains a major issue in several countries, especially in South Asia and sub-Saharan Africa, where millions of children are affected. The **highest numbers** are seen in countries like **India, Pakistan, and Nigeria**. While there has been some progress over the years in reducing stunting globally, the **pace of improvement is uneven**. The data also highlights a **strong link between a country's population size and the number of stunted children**, but it's clear that other factors like poverty and access to health services play a big role.
 
-The heatmap illustrates the distribution and percentage of children suffering from at least two deprivations across different countries. [[**Warmer colors**]{.underline}]{style="background-color:salmon"} indicate higher levels of deprivation, while [[**cooler colors**]{.underline}]{style="background-color:lightblue"} represent lower levels. This visualization allows us to discern geographical patterns and disparities in child well-being globally. Countries with [**warmer shades**]{style="color: salmon"} may require more attention and targeted interventions to address the underlying causes of deprivation and improve child welfare than those with [**cooler shades.**]{style="color: lightblue"}
+## [Solutions]{style="font-family: serif"}
 
-### [[**Understanding Child Stunting and Wasting**]{.underline}]{style="font-family: serif"} 📊
+1. Focus resources and **support on countries with the highest burden**, such as India, Pakistan, and Nigeria.
+2. **Tailor interventions** to regional needs, especially in South Asia and sub-Saharan Africa.
+3. Combine **nutrition programs with improvements** in health, education, and living conditions.
+4. Use data to **monitor progress** and adjust strategies as needed.
+5. Encourage **collaboration between governments, NGOs, and international partners** to address both immediate needs and root causes.
 
-*Measured by the percentage of children with height-for-age and weight-for-height below -2 standard deviations. This indicator highlights severe malnutrition.*
-
-Let's identify the countries facing the most significant challenges in child nutrition by looking at the top 10 countries with the highest average rates of child stunting and wasting.
-
-```{r top_10_stunting_wasting, fig.align='center', fig.show='hold', out.width='80%', fig.width=7, fig.height=5}
-# Calculate top 10 countries for stunting and wasting using unicef_indicator_2
-top_countries_stunting_wasting <- unicef_indicator_2 %>%
-  group_by(country) %>%
-  summarize(avg_stunted_wasted = mean(obs_value, na.rm = TRUE)) %>%
-  arrange(desc(avg_stunted_wasted)) %>%
-  top_n(10, avg_stunted_wasted) # Explicitly specify the variable for top_n
-
-# Create the plot
-top_countries_stunting_wasting_plot <- ggplot(top_countries_stunting_wasting, aes(x = avg_stunted_wasted, y = reorder(country, avg_stunted_wasted))) +
-  geom_bar(stat = "identity", fill = "purple") + # Uses purple bars
-  geom_text(aes(label = sprintf("%.2f%%", avg_stunted_wasted), x = avg_stunted_wasted), hjust = -0.1, size = 3.5) + # Added % sign and adjusted position/size
-  labs(title = "Top 10 Countries: Average Child Stunting & Wasting Rate",
-       x = "Average Rate (%)", y = NULL) + # Label indicates Percentage Rate
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 12),
-        axis.title.y = element_blank(),
-        panel.grid.major.y = element_blank(), # Remove horizontal grid lines
-        panel.grid.minor.x = element_blank(), # Remove minor vertical grid lines
-        axis.line.x = element_line(color="grey"), # Add x-axis line
-        axis.ticks.x = element_line(color="grey"), # Add x-axis ticks
-        axis.text.x = element_text(size=10)) +
-  coord_cartesian(clip = 'off') + # Allow text labels to go outside plot area
-  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) # Expand x-axis slightly for labels
-
-print(top_countries_stunting_wasting_plot)
-```
-
-This chart reveals the countries where children are most affected by severe malnutrition, indicated by both stunting (low height for age) and wasting (low weight for height). High rates in these countries point to critical needs for nutritional support, healthcare interventions, and improvements in food security and sanitation. Addressing stunting and wasting is crucial for long-term child development and survival.
-
-## [[**In light of all the findings of this Report...**]{.underline}]{style="font-family: serif"}
-
-[**UNICEF**]{style="color: dodgerblue"} has sets a series of [**ambitious goals**]{style="color: dodgerblue"} aimed at addressing critical aspects of child and adolescent health. From shielding children against the pervasive threat of malnutrition to providing vital resources for combating life-threatening conditions. These milestones represent a roadmap for UNICEF's dedicated efforts over the next few years.
-
-[Each number reflects not just a statistic, but a step towards a healthier future for the most vulnerable segments of the population.]{style="background-color: yellow"}
-
-#### [**KEY PLANNED RESULTS FOR 2025**]{style="font-family: serif"} ![](images/gooal.png){width="33" height="30"}
-
-![](images/goal%20giusto-2-01.png){fig-align="center" width="493"}
-
-## [[**Conclusion**]{.underline}]{style="font-family: serif"}
-
-As we conclude this report, several key findings emerge from our exploration of global child well-being indicators. Firstly, we observed significant variations in child deprivation rates across countries, highlighting **disparities in socio-economic conditions that impact children's quality of life.** Additionally, the negative correlation between child deprivation rates, GDP per capita and life expectancy at birth underscores the **economic challenges faced by countries with higher deprivation levels.**
-
-Furthermore, our analysis revealed a concerning correlation between child deprivation rates and nutritional indicators, such as the percentage of children suffering from stunting and wasting. This highlights the [**complex interplay between socio-economic factors and health outcomes, emphasizing the need for holistic approaches to address child well-being.**]{style="background-color: yellow"}
-
-### [Solutions]{style="font-family: serif"}
-
-Adressing the challenges highlighted in this report requires multifaceted solutions.
-
-**Policy interventions** aimed at reducing poverty, **improving access to education and healthcare**, and **promoting gender equality** are crucial steps towards alleviating child deprivation. Additionally, **targeted nutritional programs** and i**nvestments in social infrastructure** can help mitigate the impact of socio-economic disparities on children's health and well-being.
-
-While the findings presented here paint a sobering picture of global child well-being, they also underscore the **importance of concerted efforts to address these challenges**. By **leveraging data-driven insights** and implementing evidence-based interventions, [**we can work towards a future where every child has the opportunity to thrive and reach their full potential.**]{style="background-color: yellow"}
+By acting on these recommendations, we can accelerate progress and help more children grow up healthy and strong.
 
 ------------------------------------------------------------------------
-
-### [Follow us...]{style="font-family: cursive"} {style="color: dodgerblue"}
-
-**Join our community and stay updated with the latest news, events, and ways you can make a difference.**
-
-**Follow us on social media to see real-time updates and stories of how your support is changing children's lives around the world. Connect with us today on Facebook, X, Instagram, and LinkedIn to help advocate for children's rights and wellbeing.**
-
-**Together, we can build a better future for every child.** [**(click on the apps to follow)**]{style="color: skyblue"}
-
-|                                                                                           |                                                                                    |                                                                                       |                                                                                                                            |
-|:----------------:|:----------------:|:----------------:|:-----------------:|
-| [![](images/Facebook_logo_(square)-01.png){width="60"}](https://www.facebook.com/unicef/) | [![](images/Instagram_icon-01.png){width="60"}](https://www.instagram.com/unicef/) | [![](images/LinkedIn_logo.png){width="60"}](https://www.linkedin.com/company/unicef/) | [![](images/x%20logo.avif){width="60"}](https://twitter.com/UNICEF?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor) |
