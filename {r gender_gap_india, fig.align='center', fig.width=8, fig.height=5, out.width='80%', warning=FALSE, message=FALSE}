@@ -1,0 +1,56 @@
+combined_indicators <- read_csv("Indicator_Combined.csv")
+
+india_hiv_data <- combined_indicators %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  filter(country == "India") %>%
+  filter(sex %in% c("Female", "Male"))
+
+latest_year <- max(india_hiv_data$time_period)
+latest_data <- india_hiv_data %>%
+  filter(time_period == latest_year)
+
+chart_data <- latest_data %>%
+  mutate(
+    With_Knowledge = obs_value,
+    Without_Knowledge = 100 - obs_value
+  ) %>%
+  select(sex, With_Knowledge, Without_Knowledge) %>%
+  tidyr::pivot_longer(
+    cols = c(With_Knowledge, Without_Knowledge),
+    names_to = "knowledge_status",
+    values_to = "percentage"
+  )
+
+gender_gap_chart <- ggplot(chart_data, aes(x = percentage, y = sex, fill = knowledge_status)) +
+  geom_col(position = position_stack(reverse = TRUE), width = 0.6) +
+  scale_fill_manual(
+    values = c("With_Knowledge" = "darkgreen", "Without_Knowledge" = "#CCCCCC"),
+    labels = c("With HIV Knowledge", "Without HIV Knowledge")
+  ) +
+  labs(
+    title = paste0("Gender Gap in HIV Knowledge in India (", latest_year, ")"),
+    subtitle = "Percentage of youth (15-24) with comprehensive, correct knowledge of HIV",
+    x = "Percentage (%)",
+    y = NULL,
+    fill = NULL
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", percentage),
+        x = ifelse(knowledge_status == "With_Knowledge", 
+                  percentage/2, 
+                  100 - percentage/2)),
+    color = ifelse(chart_data$knowledge_status == "With_Knowledge", "white", "black"),
+    size = 3.5
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 10, face = "bold")
+  ) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20))
+
+print(gender_gap_chart) 
