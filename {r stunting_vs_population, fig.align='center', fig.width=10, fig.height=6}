@@ -1,0 +1,44 @@
+# Join stunting data with population data from metadata
+stunting_population <- combined_data %>%
+  filter(grepl("Height-for-age", indicator)) %>%
+  group_by(country, alpha_3_code) %>%
+  summarize(avg_stunting = mean(obs_value, na.rm = TRUE)) %>%
+  inner_join(unicef_metadata %>% 
+               select(alpha_3_code = `Country Code`, population = `Population, total`) %>%
+               group_by(alpha_3_code) %>%
+               summarize(avg_population = mean(population, na.rm = TRUE)),
+             by = "alpha_3_code") %>%
+  filter(!is.na(avg_population), !is.na(avg_stunting)) %>%
+  filter(avg_population > 1000000) # Filter for countries with at least 1M population
+
+# Create scatter plot
+stunting_pop_plot <- ggplot(stunting_population, aes(x = avg_population, y = avg_stunting)) +
+  geom_point(aes(size = avg_population, color = avg_stunting), alpha = 0.7) +
+  geom_text(aes(label = country), hjust = -0.1, vjust = 0, size = 3, 
+            data = subset(stunting_population, 
+                         avg_stunting > 30 | 
+                         (avg_population > 100000000 & avg_stunting > 20))) +
+  scale_x_log10(labels = comma) +
+  scale_size_continuous(range = c(2, 15), guide = "none") +
+  scale_color_gradient(low = "#f9d5a7", high = "#d35400",
+                      name = "Stunting Rate (%)") +
+  labs(title = "Child Stunting Rates vs. Population Size",
+       subtitle = "Countries with larger circles have larger populations",
+       x = "Population (log scale)",
+       y = "Stunting Rate (%)",
+       caption = "Source: UNICEF Global Database") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    legend.position = "right"
+  ) +
+  annotate("text", x = max(stunting_population$avg_population, na.rm = TRUE)/10, 
+           y = min(stunting_population$avg_stunting, na.rm = TRUE)*1.5, 
+           label = "Lower population,\nlower stunting rates", 
+           size = 3.5, color = "gray30") +
+  annotate("text", x = max(stunting_population$avg_population, na.rm = TRUE)/10, 
+           y = max(stunting_population$avg_stunting, na.rm = TRUE)*0.9, 
+           label = "Lower population,\nhigher stunting rates", 
+           size = 3.5, color = "gray30")
+
+print(stunting_pop_plot) 

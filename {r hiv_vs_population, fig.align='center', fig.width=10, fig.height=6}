@@ -1,0 +1,40 @@
+# Join HIV knowledge data with population data
+hiv_population <- combined_data %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  group_by(country, alpha_3_code) %>%
+  summarize(avg_hiv_knowledge = mean(obs_value, na.rm = TRUE)) %>%
+  inner_join(unicef_metadata %>% 
+               select(alpha_3_code = `Country Code`, population = `Population, total`) %>%
+               group_by(alpha_3_code) %>%
+               summarize(avg_population = mean(population, na.rm = TRUE)),
+             by = "alpha_3_code") %>%
+  filter(!is.na(avg_population), !is.na(avg_hiv_knowledge)) %>%
+  filter(avg_population > 1000000) # Filter for countries with at least 1M population
+
+# Create scatter plot
+hiv_pop_plot <- ggplot(hiv_population, aes(x = avg_population, y = avg_hiv_knowledge)) +
+  geom_point(aes(size = avg_population, color = avg_hiv_knowledge), alpha = 0.7) +
+  geom_text(aes(label = country), hjust = -0.1, vjust = 0, size = 3, 
+            data = subset(hiv_population, 
+                         avg_hiv_knowledge > 40 | 
+                         (avg_population > 100000000 & avg_hiv_knowledge > 10))) +
+  scale_x_log10(labels = comma) +
+  scale_size_continuous(range = c(2, 15), guide = "none") +
+  scale_color_gradient(low = "#d6eaf8", high = "#2980b9",
+                      name = "HIV Knowledge (%)") +
+  labs(title = "Youth HIV Knowledge Rates vs. Population Size",
+       subtitle = "Countries with larger circles have larger populations",
+       x = "Population (log scale)",
+       y = "HIV Knowledge Rate (%)",
+       caption = "Source: UNICEF Global Database") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    legend.position = "right"
+  ) +
+  annotate("text", x = min(hiv_population$avg_population, na.rm = TRUE)*10, 
+           y = max(hiv_population$avg_hiv_knowledge, na.rm = TRUE)*0.9, 
+           label = "Lower population,\nhigher HIV knowledge", 
+           size = 3.5, color = "gray30")
+
+print(hiv_pop_plot) 
