@@ -1,0 +1,29 @@
+# Filter data for HIV knowledge
+hiv_knowledge_data <- combined_data %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  group_by(country) %>%
+  summarize(avg_hiv_knowledge = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(desc(avg_hiv_knowledge)) %>%
+  top_n(10)
+
+# Create bar chart for HIV knowledge by country
+hiv_country_chart <- ggplot(hiv_knowledge_data, aes(x = avg_hiv_knowledge, y = reorder(country, avg_hiv_knowledge))) +
+  geom_bar(stat = "identity", fill = "#3498db") +
+  geom_text(aes(label = sprintf("%.1f%%", avg_hiv_knowledge)), hjust = -0.2, size = 4) +
+  labs(title = "Top 10 Countries: Youth HIV Knowledge",
+       subtitle = "Average percentage of young people (15-24 years) with comprehensive HIV knowledge",
+       x = "HIV Knowledge Rate (%)",
+       y = NULL,
+       caption = "Source: UNICEF Global Database") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
+  coord_cartesian(clip = 'off') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.2)), limits = c(0, max(hiv_knowledge_data$avg_hiv_knowledge) * 1.25))
+
+print(hiv_country_chart) 

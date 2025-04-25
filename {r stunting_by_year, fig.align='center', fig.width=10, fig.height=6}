@@ -1,0 +1,31 @@
+# Analyze stunting trends over time
+stunting_year_data <- combined_data %>%
+  filter(grepl("Height-for-age", indicator)) %>%
+  group_by(time_period) %>%
+  summarize(avg_stunting = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(time_period) %>%
+  filter(!is.na(time_period), !is.na(avg_stunting),
+         time_period >= 2000, time_period <= 2020) # Focus on recent decades
+
+# Create line chart for stunting trends
+stunting_year_chart <- ggplot(stunting_year_data, aes(x = time_period, y = avg_stunting)) +
+  geom_line(color = "#e67e22", size = 1.5) +
+  geom_point(color = "#e67e22", size = 3) +
+  geom_smooth(method = "loess", se = TRUE, color = "#c0392b", alpha = 0.2) +
+  labs(title = "Global Trend in Child Stunting Rates (2000-2020)",
+       subtitle = "Average percentage of children with height-for-age below -2SD",
+       x = "Year",
+       y = "Average Stunting Rate (%)",
+       caption = "Source: UNICEF Global Database") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_x_continuous(breaks = seq(2000, 2020, 5)) +
+  annotate("text", x = 2010, y = max(stunting_year_data$avg_stunting, na.rm = TRUE),
+           label = "Overall declining trend indicates\nprogress in nutrition interventions",
+           size = 4, color = "#c0392b", hjust = 0.5)
+
+print(stunting_year_chart) 

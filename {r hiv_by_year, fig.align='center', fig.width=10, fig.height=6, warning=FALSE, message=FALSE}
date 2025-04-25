@@ -1,0 +1,51 @@
+# Apply the same fix to hiv_by_year
+hiv_year_data <- combined_data %>%
+  filter(grepl("comprehensive.*knowledge of HIV", indicator, ignore.case = TRUE)) %>%
+  filter(!is.na(time_period), !is.na(obs_value)) %>% 
+  # Explicitly convert time_period to numeric
+  mutate(time_period = as.numeric(as.character(time_period))) %>%
+  filter(!is.na(time_period)) %>% # Remove any that couldn't be converted
+  filter(time_period >= 2000, time_period <= 2020) %>%
+  group_by(time_period) %>%
+  summarize(avg_hiv_knowledge = mean(obs_value, na.rm = TRUE), .groups = "drop") %>%
+  arrange(time_period)
+
+# Only create plot if we have data
+if(nrow(hiv_year_data) > 0) {
+  # Create line chart for HIV knowledge trends
+  ggplot(hiv_year_data, aes(x = time_period, y = avg_hiv_knowledge)) +
+    geom_line(color = "#3498db", size = 1.5) +
+    geom_point(color = "#3498db", size = 3) +
+    # Only add smooth if we have enough points
+    {if(nrow(hiv_year_data) >= 4) 
+      geom_smooth(method = ifelse(nrow(hiv_year_data) > 10, "loess", "lm"), 
+                 se = TRUE, color = "#2c3e50", alpha = 0.2, 
+                 formula = y ~ x, span = 0.75)
+    } +
+    labs(title = "Global Trend in Youth HIV Knowledge (2000-2020)",
+         subtitle = "Average percentage of young people with comprehensive HIV knowledge",
+         x = "Year",
+         y = "Average HIV Knowledge Rate (%)",
+         caption = "Source: UNICEF Global Database") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 16),
+      axis.text = element_text(size = 10),
+      panel.grid.minor = element_blank()
+    ) +
+    # Use dynamic breaks with explicit numeric conversion
+    scale_x_continuous(breaks = function(x) pretty(x, n = 5)) +
+    # Safe annotation placement
+    {if(nrow(hiv_year_data) >= 4)
+      annotate("text", x = mean(hiv_year_data$time_period), 
+               y = max(hiv_year_data$avg_hiv_knowledge, na.rm = TRUE) * 0.9,
+               label = "Trend suggests varying implementation of HIV education programs",
+               size = 4, color = "#2c3e50", hjust = 0.5)
+    }
+} else {
+  # Fallback plot if insufficient data
+  ggplot() + 
+    geom_text(aes(x = 0.5, y = 0.5), label = "Insufficient time series data", size = 6) +
+    theme_void() +
+    xlim(0, 1) + ylim(0, 1)
+} 

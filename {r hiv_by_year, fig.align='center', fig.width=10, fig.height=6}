@@ -1,0 +1,31 @@
+# Analyze HIV knowledge trends over time
+hiv_year_data <- combined_data %>%
+  filter(grepl("comprehensive, correct knowledge of HIV", indicator)) %>%
+  group_by(time_period) %>%
+  summarize(avg_hiv_knowledge = mean(obs_value, na.rm = TRUE)) %>%
+  arrange(time_period) %>%
+  filter(!is.na(time_period), !is.na(avg_hiv_knowledge),
+         time_period >= 2000, time_period <= 2020) # Focus on recent decades
+
+# Create line chart for HIV knowledge trends
+hiv_year_chart <- ggplot(hiv_year_data, aes(x = time_period, y = avg_hiv_knowledge)) +
+  geom_line(color = "#3498db", size = 1.5) +
+  geom_point(color = "#3498db", size = 3) +
+  geom_smooth(method = "loess", se = TRUE, color = "#2c3e50", alpha = 0.2) +
+  labs(title = "Global Trend in Youth HIV Knowledge (2000-2020)",
+       subtitle = "Average percentage of young people with comprehensive HIV knowledge",
+       x = "Year",
+       y = "Average HIV Knowledge Rate (%)",
+       caption = "Source: UNICEF Global Database") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_x_continuous(breaks = seq(2000, 2020, 5)) +
+  annotate("text", x = 2010, y = max(hiv_year_data$avg_hiv_knowledge, na.rm = TRUE)*0.9,
+           label = "Fluctuating trend suggests inconsistent\nimplementation of HIV education programs",
+           size = 4, color = "#2c3e50", hjust = 0.5)
+
+print(hiv_year_chart) 
